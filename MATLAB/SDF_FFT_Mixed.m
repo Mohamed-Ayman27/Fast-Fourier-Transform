@@ -70,25 +70,6 @@ twiddleROM([15,60] + 1) =  -(1i *twiddleROM([11] + 1));  %W^(28): +16
 twiddleROM([29,46] + 1) =  -(1i *twiddleROM([23] + 1));  %W^(30): +16
 
 %=========================================================================================%
-
-%---------generic block---------%
-% Stage1_final_output = FFT_input;
-% for k3=0:1:(log2(FFT_point)-1)
-%     for k2=1:FFT_point/(2^(k3)):FFT_point
-%         Stage1_buffered(floor(k2/FFT_point/(2^(k3)))*FFT_point/(2^(k3+1))+1:floor(k2/FFT_point/(2^(k3)))*FFT_point/(2^(k3+1))+FFT_point/(2^(k3+1)),1) = Stage1_final_output(k2:k2-1+FFT_point/(2^(k3+1)),1);
-%         Stage1_unbuffered(floor(k2/FFT_point/(2^(k3)))*FFT_point/(2^(k3+1))+1:floor(k2/FFT_point/(2^(k3)))*FFT_point/(2^(k3+1))+FFT_point/(2^(k3+1)),1) = Stage1_final_output(k2+FFT_point/(2^(k3+1)):k2-1+FFT_point/(2^(k3)),1);
-% 
-%         [Stage1_output(1:FFT_point/(2^(k3+1)),ceil(k2/(FFT_point/(2^(k3))))),Stage1_output(FFT_point/(2^(k3+1))+1:FFT_point/(2^(k3)),ceil(k2/(FFT_point/(2^(k3)))))] = Butterfly(Stage1_buffered(floor(k2/FFT_point/(2^(k3)))*FFT_point/(2^(k3+1))+1:floor(k2/FFT_point/(2^(k3)))*FFT_point/(2^(k3+1))+FFT_point/(2^(k3+1)),1),Stage1_unbuffered(floor(k2/FFT_point/(2^(k3)))*FFT_point/(2^(k3+1))+1:floor(k2/FFT_point/(2^(k3)))*FFT_point/(2^(k3+1))+FFT_point/(2^(k3+1)),1));
-%     end
-% 
-%     Stage1_Twiddle_factor = [ones(FFT_point/(2^(k3+1)),1); 
-%                              Twiddle_factor(1:(2^(k3)):size(Twiddle_factor))];
-%     Stage1_Twiddle_factor = repmat(Stage1_Twiddle_factor,(2^(k3)),1);    
-% %     Stage1_final_output = reshape(Stage1_output,FFT_point,1);
-%     Stage1_final_output = Stage1_final_output.*Stage1_Twiddle_factor;
-% end
-% output_r = real(Stage1_final_output);
-% output_i = imag(Stage1_final_output);
 %=========first stage=========%
 for k2=1:FFT_point/1:FFT_point
     Stage1_buffered(:,ceil(k2/(FFT_point/1))) = FFT_input(k2:k2-1+FFT_point/2,1);
@@ -103,9 +84,6 @@ Stage1_output_Mixed=Stage1_output;
 Stage1_output_Mixed = reshape(Stage1_output_Mixed,FFT_point,1);
 
 Stage1_output_Mixed( ( ( 3*FFT_point/4 ) + 1 ):FFT_point,1) = Stage1_output_Mixed(( ( 3*FFT_point/4 ) + 1 ):FFT_point,1).*(-fi_1i); 
-
-% ynf3 3ady adrb f i wala kda hb2a 3mlt 16 multiplication wala kda kda
-% htb2a mapped le rotater
 
 %***********************************%
 
@@ -131,20 +109,9 @@ Stage2_output_Mixed( ( ( 5 * FFT_point/8 ) + 1 ):( 3 * FFT_point/4),1) = Stage2_
 Stage2_output_Mixed( ( ( 7 * FFT_point/8 ) + 1 ):(FFT_point),1) = Stage2_output_Mixed( ( ( 7 * FFT_point/8 ) + 1 ):(FFT_point),1).*((-const) - (const*fi_1i) ); 
 
 
-%***********************************%
-
-% Stage2_Twiddle_factor = [ones(FFT_point/4,1); 
-%                          Twiddle_factor(1:2:size(Twiddle_factor))];
-% Stage2_Twiddle_factor = repmat(Stage2_Twiddle_factor,2,1);    
-% Stage2_final_output = reshape(Stage2_output,FFT_point,1);
-% Stage2_final_output = Stage2_final_output.*Stage2_Twiddle_factor;
 %=========third stage==========%
 for k2=1:FFT_point/4:FFT_point
-%     Stage3_buffered(:,ceil(k2/(FFT_point/4))) = Stage2_final_output(k2:k2-1+FFT_point/8,1);
-%     Stage3_unbuffered(:,ceil(k2/(FFT_point/4))) = Stage2_final_output(k2+FFT_point/8:k2-1+FFT_point/4,1);
-%     
-%     [Stage3_output(1:FFT_point/8,ceil(k2/(FFT_point/4))),Stage3_output(FFT_point/8+1:FFT_point/4,ceil(k2/(FFT_point/4)))] = Butterfly(Stage3_buffered(:,ceil(k2/(FFT_point/4))),Stage3_unbuffered(:,ceil(k2/(FFT_point/4))));
-    
+
     Stage3_buffered(:,ceil(k2/(FFT_point/4))) = Stage2_output_Mixed(k2:k2-1+FFT_point/8,1);
     Stage3_unbuffered(:,ceil(k2/(FFT_point/4))) = Stage2_output_Mixed(k2+FFT_point/8:k2-1+FFT_point/4,1);
     
@@ -152,9 +119,7 @@ for k2=1:FFT_point/4:FFT_point
 
 end
 Stage3_output = Stage3_output(:);
-%  Stage3_Twiddle_factor = [ones(FFT_point/8,1); 
-%                           Twiddle_factor(1:4:size(Twiddle_factor))];
-%Stage3_Twiddle_factor = repmat(Stage3_Twiddle_factor,4,1);    
+ 
  Stage3_final_output = reshape(Stage3_output,FFT_point,1);
  Stage3_final_output = Stage3_final_output.*twiddleROM;
 %===========fourth stage========%
@@ -173,13 +138,7 @@ for j = ( FFT_point/8 - 1 ) : FFT_point/8 : FFT_point
     Stage4_output_Mixed(j) = Stage4_output_Mixed(j) * (-fi_1i);
     Stage4_output_Mixed(j+1) = Stage4_output_Mixed(j+1) * (-fi_1i);
 end
-%*******************************************%
 
-% Stage4_Twiddle_factor = [ones(FFT_point/16,1); 
-%                          Twiddle_factor(1:8:size(Twiddle_factor))];
-% Stage4_Twiddle_factor = repmat(Stage4_Twiddle_factor,8,1);
-% Stage4_final_output = reshape(Stage4_output,FFT_point,1);
-% Stage4_final_output = Stage4_final_output.*Stage4_Twiddle_factor;
 %============fifth stage=============%
 for k2=1:FFT_point/16:FFT_point
     Stage5_buffered(:,ceil(k2/(FFT_point/16))) = Stage4_output_Mixed(k2:k2-1+FFT_point/32,1);
@@ -200,15 +159,6 @@ for j = 1:FFT_point/8:FFT_point
     Stage5_output_Mixed(j+7) = Stage5_output_Mixed(j+7) * ((-const) - (const*fi_1i));
 
 end
-%*******************************************%
-
-
-% 
-% Stage5_Twiddle_factor = [ones(FFT_point/32,1); 
-%                          Twiddle_factor(1:16:size(Twiddle_factor))];
-% Stage5_Twiddle_factor = repmat(Stage5_Twiddle_factor,16,1);
-% Stage5_final_output = reshape(Stage5_output,FFT_point,1);
-% Stage5_final_output = Stage5_final_output.*Stage5_Twiddle_factor;
 % %========sixth stage=========%
 for k2=1:FFT_point/32:FFT_point
     Stage6_buffered(:,ceil(k2/(FFT_point/32))) = Stage5_output_Mixed(k2:k2-1+FFT_point/64,1);
@@ -220,27 +170,7 @@ end
 
 Stage6_output = Stage6_output(:);
 
-%Stage6_Twiddle_factor = [ones(FFT_point/64,1); 
-  %                       Twiddle_factor(1:32:size(Twiddle_factor))];
-%Stage6_Twiddle_factor = repmat(Stage6_Twiddle_factor,32,1);
-%Stage6_final_output = reshape(Stage6_output,FFT_point,1);
-%Stage6_final_output = Stage6_final_output.*Stage6_Twiddle_factor;
 output_r = real(Stage6_output); %%%%%%%%%%64 NFFT
 output_i = imag(Stage6_output); %%%%%%%%%%64 NFFT
-% %========seventh stage=============% %%%%%%%%%%%128 NFFT
-% for k2=1:FFT_point/64:FFT_point
-%     Stage7_buffered(:,ceil(k2/(FFT_point/64))) = Stage6_final_output(k2:k2-1+FFT_point/128,1);
-%     Stage7_unbuffered(:,ceil(k2/(FFT_point/64))) = Stage6_final_output(k2+FFT_point/128:k2-1+FFT_point/64,1);
-%     
-%     [Stage7_output(1:FFT_point/128,ceil(k2/(FFT_point/64))),Stage7_output(FFT_point/128+1:FFT_point/64,ceil(k2/(FFT_point/64)))] = Butterfly(Stage7_buffered(:,ceil(k2/(FFT_point/64))),Stage7_unbuffered(:,ceil(k2/(FFT_point/64))));
-% end
-% 
-% Stage7_Twiddle_factor = [ones(FFT_point/128,1); 
-%                          Twiddle_factor(1:64:size(Twiddle_factor))];
-% Stage7_Twiddle_factor = repmat(Stage7_Twiddle_factor,64,1);
-% Stage7_final_output = reshape(Stage7_output,FFT_point,1);
-% Stage7_final_output = Stage7_final_output.*Stage7_Twiddle_factor;
-% %============================================%
-% output_r = real(Stage7_final_output);
-% output_i = imag(Stage7_final_output);
+
 end
