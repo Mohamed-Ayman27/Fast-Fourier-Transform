@@ -1,9 +1,4 @@
 function [output_r,output_i] = SDF_IFFT_Mixed(input_r,input_i)
-%SDF_IFFT128 Summary of this function goes here
-%   this is 128/64_point FFT accepts real and imaginary values, apply SDF
-%   algorithm the outputs reversed order frequency domain values
-%   when changing between 128 and 64, see the lines that should be
-%   commented and uncommented indicated by %128 or %64
 
 nt = numerictype(input_r);
 Word_length = nt.WordLength;
@@ -20,7 +15,6 @@ F2 = fimath('SumMode', 'SpecifyPrecision', 'SumWordLength',...
    Frac_length+4,'OverflowAction',"Wrap",'RoundingMethod',"Floor");
 
 
-% FFT_point = 128; %%%%%%%%%%128 NFFT
 FFT_point = 64; %%%%%%%%%%64 NFFT
 IFFT_input = input_r+1i*input_i;
 
@@ -72,34 +66,7 @@ twiddleROM([29,46] + 1) =  (1i *twiddleROM([23] + 1));  %W^(30): +16
 const = fi(0.70710678,1,Word_length,Frac_length+4,F2);
 fi_1i = fi(1i,1,Word_length,Frac_length+4,F2);
 
-
-
-
-
-%==========stage 1==========%
-% Stage1_Twiddle_factor = [ones(FFT_point/128,1); 
-%                          Twiddle_factor(1:64:size(Twiddle_factor))];
-% Stage1_Twiddle_factor = repmat(Stage1_Twiddle_factor,64,1);
-% IFFT_input = IFFT_input.*Stage1_Twiddle_factor;
-% 
-% for k2=1:FFT_point/64:FFT_point
-%     Stage1_buffered(:,ceil(k2/(FFT_point/64))) = IFFT_input(k2:k2-1+FFT_point/128,1);
-%     Stage1_unbuffered(:,ceil(k2/(FFT_point/64))) = IFFT_input(k2+FFT_point/128:k2-1+FFT_point/64,1);
-%     
-%     [Stage1_output(1:FFT_point/128,ceil(k2/(FFT_point/64))),Stage1_output(FFT_point/128+1:FFT_point/64,ceil(k2/(FFT_point/64)))] = Butterfly(Stage1_buffered(:,ceil(k2/(FFT_point/64))),Stage1_unbuffered(:,ceil(k2/(FFT_point/64))));
-% end
-%==========stage 2==========%
-% Stage1_final_output = reshape(Stage1_output,FFT_point,1); %%%%%%%%128
-% 
-% Stage2_Twiddle_factor = [ones(FFT_point/64,1); 
-%                          Twiddle_factor(1:32:size(Twiddle_factor))];
-% Stage2_Twiddle_factor = repmat(Stage2_Twiddle_factor,32,1);
-% % Stage1_final_output = Stage1_final_output.*Stage2_Twiddle_factor; %%%%%%%%%128
-% IFFT_input = IFFT_input.*Stage2_Twiddle_factor; %%%%%%%64
-
 for k2=1:FFT_point/32:FFT_point
-%     Stage2_buffered(:,ceil(k2/(FFT_point/32))) = Stage1_final_output(k2:k2-1+FFT_point/64,1); %128
-%     Stage2_unbuffered(:,ceil(k2/(FFT_point/32))) = Stage1_final_output(k2+FFT_point/64:k2-1+FFT_point/32,1);  %128
     Stage2_buffered(:,ceil(k2/(FFT_point/32))) = IFFT_input(k2:k2-1+FFT_point/64,1); %64
     Stage2_unbuffered(:,ceil(k2/(FFT_point/32))) = IFFT_input(k2+FFT_point/64:k2-1+FFT_point/32,1); %64
 
@@ -120,8 +87,6 @@ for j = 1:FFT_point/8:FFT_point
 end
 %*******************************************%
 
-%Stage2_final_output = Stage2_final_output.*Stage3_Twiddle_factor;
-
 for k2=1:FFT_point/16:FFT_point
     Stage3_buffered(:,ceil(k2/(FFT_point/16))) = Stage2_output_Mixed(k2:k2-1+FFT_point/32,1);
     Stage3_unbuffered(:,ceil(k2/(FFT_point/16))) = Stage2_output_Mixed(k2+FFT_point/32:k2-1+FFT_point/16,1);
@@ -140,8 +105,6 @@ for j = ( FFT_point/8 - 1 ) : FFT_point/8 : FFT_point
     Stage3_output_Mixed(j+1) = Stage3_output_Mixed(j+1) * (fi_1i);
 end
 %*******************************************%
-
-%Stage3_final_output = Stage3_final_output.*Stage4_Twiddle_factor;
 
 for k2=1:FFT_point/8:FFT_point
     Stage4_buffered(:,ceil(k2/(FFT_point/8))) = Stage3_output_Mixed(k2:k2-1+FFT_point/16,1);
@@ -175,7 +138,6 @@ Stage5_output_Mixed( ( ( 5 * FFT_point/8 ) + 1 ):( 3 * FFT_point/4),1) = Stage5_
 Stage5_output_Mixed( ( ( 7 * FFT_point/8 ) + 1 ):(FFT_point),1) = Stage5_output_Mixed( ( ( 7 * FFT_point/8 ) + 1 ):(FFT_point),1).*((-const) + (const*fi_1i)); 
 
 %***********************************%
-%Stage5_final_output = Stage5_final_output.*Stage6_Twiddle_factor;
 
 for k2=1:FFT_point/2:FFT_point
     Stage6_buffered(:,ceil(k2/(FFT_point/2))) = Stage5_output_Mixed(k2:k2-1+FFT_point/4,1);
@@ -200,7 +162,6 @@ for k2=1:FFT_point/1:FFT_point
 end
 
 Stage7_final_output = reshape(Stage7_output,FFT_point,1);
-% Stage7_final_output = 1/FFT_point.*Stage7_final_output;
 
 output_r = real(Stage7_final_output);
 output_i = imag(Stage7_final_output);
