@@ -1,10 +1,4 @@
 function [output_r,output_i] = SDF_FFT_Mixed(input_r,input_i)
-%SDF_FFT128 Summary of this function goes here
-%   this is 128_point FFT accepts real and imaginary values, apply SDF
-%   algorithm the outputs reversed order frequency domain values
-%   when changing between 128 and 64, see the lines that should be
-%   commented and uncommented indicated by %128 or %64
-
 
 
 nt = numerictype(input_r);
